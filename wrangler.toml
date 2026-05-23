@@ -1,12 +1,12 @@
 # ==============================================================================
 # Cloudflare Pages / Wrangler Configuration File
 # ==============================================================================
-# This file is the source of truth for your dashboard deployment configuration.
-# Cloudflare Pages automatically detects this file and configures bindings on deploy.
-# ==============================================================================
 
 name = "dashboard"
-pages_build_output_dir = "dist"
+compatibility_date = "2026-05-23"
+
+[assets]
+directory = "./dist"
 
 [[kv_namespaces]]
 binding = "DASHBOARD_KV"
