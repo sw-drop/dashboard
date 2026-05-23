@@ -42,17 +42,14 @@ To run and test the dashboard interface locally:
 Once your code is pushed to GitHub, you will set up Cloudflare Pages:
 
 1. **Create Pages Project:**
-   * Go to the **Cloudflare Dashboard > Workers & Pages > Create > Pages > Connect to Git**.
+   * Go to the **Cloudflare Dashboard > Compute > Workers & Pages > Create** (or **Create application**).
+   * Select the **Pages** tab and click **Connect to Git**.
    * Select your GitHub repository and link it.
    * Choose **Vite** as the framework preset (Build command: `npm run build`, Output directory: `dist`).
 
-2. **Create and Bind KV Database:**
-   * Go to **Workers & Pages > KV > Create Namespace**. Name it `DASHBOARD_KV`.
-   * Go back to your Pages project in Cloudflare, navigate to **Settings > Functions > KV namespace bindings**.
-   * Add a binding:
-     * **Variable name:** `DASHBOARD_KV`
-     * **KV namespace:** Select your newly created `DASHBOARD_KV` namespace.
-     * *(Perform this bind for both "Production" and "Preview" environments).*
+2. **Automatic Database Binding (Done!):**
+   * We have created a `wrangler.toml` file in the root of your project directory with your exact database ID (`7fa42ae0bfaf47938990ad8194e5c61c`).
+   * **You can skip all manual database bindings in the Cloudflare settings dashboard entirely!** Cloudflare Pages automatically detects the `wrangler.toml` file during the build process and connects your `DASHBOARD_KV` database instantly.
 
 3. **Configure the Authentication Token Environment Variable:**
    * In your Pages project, go to **Settings > Environment Variables**.
