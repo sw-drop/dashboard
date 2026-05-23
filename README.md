@@ -51,12 +51,9 @@ Once your code is pushed to GitHub, you will set up Cloudflare Pages:
    * We have created a `wrangler.toml` file in the root of your project directory with your exact database ID (`7fa42ae0bfaf47938990ad8194e5c61c`).
    * **You can skip all manual database bindings in the Cloudflare settings dashboard entirely!** Cloudflare Pages automatically detects the `wrangler.toml` file during the build process and connects your `DASHBOARD_KV` database instantly.
 
-3. **Configure the Authentication Token Environment Variable:**
-   * In your Pages project, go to **Settings > Environment Variables**.
-   * Add a new variable:
-     * **Key:** `API_SECRET_TOKEN`
-     * **Value:** `f3b9c4501a2d4807a9e3a6c9d2f5e70c` (Or your custom secure API token).
-   * **Re-deploy** your project for these configuration changes to take effect.
+3. **Configure the Authentication Token Environment Variable (Done!):**
+   * We have added the `API_SECRET_TOKEN` environment variable directly inside the `[vars]` block of your `wrangler.toml` file!
+   * **You can skip manual environment variables in the Cloudflare settings dashboard entirely!** Cloudflare Pages automatically injects the token into your serverless functions on deploy.
 
 ---
 

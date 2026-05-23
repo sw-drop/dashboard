@@ -8,6 +8,9 @@ compatibility_date = "2026-05-23"
 [assets]
 directory = "./dist"
 
+[vars]
+API_SECRET_TOKEN = "f3b9c4501a2d4807a9e3a6c9d2f5e70c"
+
 [[kv_namespaces]]
 binding = "DASHBOARD_KV"
 id = "7fa42ae0bfaf47938990ad8194e5c61c"
