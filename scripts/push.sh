@@ -145,11 +145,24 @@ JSON_DISKS="[${JSON_DISKS%,}]"
 PAYLOAD="{\"hostname\":\"$HOST\",\"machine_type\":\"$MACHINE_TYPE\",\"os\":\"$OS_NAME\",\"uptime_seconds\":$UPTIME_SECS,\"disks\":$JSON_DISKS}"
 
 # Push to Cloudflare endpoint
-response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-  -H "Authorization: Bearer $API_SECRET_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "$PAYLOAD" \
-  "$API_URL")
+if command -v curl >/dev/null 2>&1; then
+  response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+    -H "Authorization: Bearer $API_SECRET_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD" \
+    "$API_URL")
+elif command -v wget >/dev/null 2>&1; then
+  # Fetch server headers using wget and parse the HTTP status code (e.g. 200, 403, 500)
+  response_headers=$(wget --server-response --post-data="$PAYLOAD" \
+    --header="Authorization: Bearer $API_SECRET_TOKEN" \
+    --header="Content-Type: application/json" \
+    --no-check-certificate \
+    -O /dev/null "$API_URL" 2>&1)
+  response=$(echo "$response_headers" | awk '/HTTP\// {print $2}' | tail -n 1)
+else
+  echo "Error: Neither curl nor wget was found on this system. Please install curl or wget."
+  exit 1
+fi
 
 if [ "$response" -eq 200 ] 2>/dev/null; then
   echo "Success: Telemetry pushed successfully (HTTP 200)."
