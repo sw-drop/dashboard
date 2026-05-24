@@ -21,11 +21,19 @@ MACHINE_TYPE=""
 
 # --- END OF CONFIGURATION ---
 
+# Export a robust PATH to ensure cron can find commands like sysctl, curl, awk, df, and scutil
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+
 # Resolve Hostname
 if [ -n "$HOSTNAME_OVERRIDE" ]; then
   HOST="$HOSTNAME_OVERRIDE"
 else
-  HOST=$(hostname)
+  # macOS cron environments often cause 'hostname' to return "UNKNOWN", so use scutil if available
+  if command -v scutil >/dev/null 2>&1; then
+    HOST=$(scutil --get LocalHostName)
+  else
+    HOST=$(hostname | cut -d. -f1)
+  fi
 fi
 
 # Detect OS and Sub-type
@@ -110,8 +118,8 @@ for line in $(df -kP); do
     if [[ "$mount" =~ ^/System/Volumes/ && "$mount" != "/System/Volumes/Data" ]]; then
       continue
     fi
-    # Exclude macOS recovery and VM partitions
-    if [[ "$mount" =~ ^/(Volumes/Recovery|private/var/) ]]; then
+    # Exclude macOS recovery, VM, and TimeMachine partitions
+    if [[ "$mount" =~ ^/(Volumes/Recovery|Volumes/com\.apple\.TimeMachine|private/var/) ]]; then
       continue
     fi
     
@@ -151,6 +159,8 @@ JSON_DISKS="[${JSON_DISKS%,}]"
 
 # Construct final JSON Payload (without JQ dependency)
 PAYLOAD="{\"hostname\":\"$HOST\",\"machine_type\":\"$MACHINE_TYPE\",\"os\":\"$OS_NAME\",\"uptime_seconds\":$UPTIME_SECS,\"disks\":$JSON_DISKS}"
+
+echo "Payload: $PAYLOAD"
 
 # Push to Cloudflare endpoint
 echo "Info: Initiating metrics push..."
