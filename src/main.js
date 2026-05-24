@@ -101,8 +101,20 @@ function renderDashboard(machines) {
   let onlineCount = 0;
   let offlineCount = 0;
 
-  machines.forEach((machine) => {
-    const isOnline = checkIsOnline(machine.lastSeen);
+  // Pre-calculate online status to avoid duplicate calls during sorting
+  const machinesWithStatus = machines.map(m => ({
+    machine: m,
+    isOnline: checkIsOnline(m.lastSeen)
+  }));
+
+  // Sort: online first, then offline. Secondarily sort alphabetically by hostname.
+  machinesWithStatus.sort((a, b) => {
+    if (a.isOnline && !b.isOnline) return -1;
+    if (!a.isOnline && b.isOnline) return 1;
+    return a.machine.hostname.localeCompare(b.machine.hostname);
+  });
+
+  machinesWithStatus.forEach(({ machine, isOnline }) => {
     if (isOnline) onlineCount++; else offlineCount++;
 
     const card = createMachineCard(machine, isOnline);
@@ -110,7 +122,7 @@ function renderDashboard(machines) {
   });
 
   updateQuickStats(machines.length, onlineCount, offlineCount);
-  populateDock(machines);
+  populateDock(machinesWithStatus.map(m => m.machine));
 }
 
 // Construct DOM node for a single machine
