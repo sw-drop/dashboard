@@ -110,10 +110,33 @@ function renderDashboard(machines) {
     isOnline: checkIsOnline(m.lastSeen)
   }));
 
-  // Sort: online first, then offline. Secondarily sort alphabetically by hostname.
+  // Helper to determine system type priority
+  const getSystemPriority = (m) => {
+    const osLower = (m.os || "").toLowerCase();
+    const typeLower = (m.machine_type || "").toLowerCase();
+    
+    if (osLower.includes("windows")) return 1;
+    if (typeLower.includes("ugos")) return 2;
+    if (typeLower.includes("omv")) return 3;
+    if (osLower.includes("linux") || typeLower.includes("pios") || typeLower.includes("raspbian") || typeLower.includes("debian") || typeLower.includes("ubuntu")) return 4;
+    if (osLower.includes("macos") || osLower.includes("darwin")) return 5;
+    return 6;
+  };
+
+  // Sort:
+  // 1. Online status (online first)
+  // 2. System type priority (Windows > UGOS > OMV > Linux > macOS > Other)
+  // 3. Alphabetical by hostname
   machinesWithStatus.sort((a, b) => {
     if (a.isOnline && !b.isOnline) return -1;
     if (!a.isOnline && b.isOnline) return 1;
+    
+    const priorityA = getSystemPriority(a.machine);
+    const priorityB = getSystemPriority(b.machine);
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
     return a.machine.hostname.localeCompare(b.machine.hostname);
   });
 
