@@ -55,45 +55,32 @@ export async function onRequestPost(context) {
       );
     }
 
-    // 3. Construct Unified System State
-    const systemState = {
-      hostname,
-      machine_type: machine_type || os,
-      os,
-      uptime_seconds: parseInt(uptime_seconds) || 0,
-      disks,
-      lastSeen: new Date().toISOString(),
-    };
-
-    // 4. Save to Cloudflare KV Namespace
-    // Note: The KV binding must be named 'DASHBOARD_KV' in your Cloudflare dashboard
-    if (!env.DASHBOARD_KV) {
+    // 3. Save to Cloudflare D1 Database
+    if (!env.DASHBOARD_DB) {
       return new Response(
-        JSON.stringify({ error: "Server Configuration Error: KV namespace DASHBOARD_KV not bound" }),
+        JSON.stringify({ error: "Server Configuration Error: D1 database DASHBOARD_DB not bound" }),
         { status: 500, headers: corsHeaders }
       );
     }
 
     const normalizedHost = hostname.toLowerCase().trim();
-    const kvKey = `machine:${normalizedHost}`;
-    await env.DASHBOARD_KV.put(kvKey, JSON.stringify(systemState));
+    const finalMachineType = machine_type || os;
+    const uptimeSecs = parseInt(uptime_seconds) || 0;
+    const now = Date.now();
+    const disksJson = JSON.stringify(disks);
 
-    // Maintain a fast-read machines index to avoid costly and quota-restricted list() operations
-    const indexKey = "machines_index";
-    let machines = [];
-    const indexStr = await env.DASHBOARD_KV.get(indexKey);
-    if (indexStr) {
-      try {
-        machines = JSON.parse(indexStr);
-      } catch (e) {
-        machines = [];
-      }
-    }
+    const stmt = env.DASHBOARD_DB.prepare(
+      `INSERT INTO machines (hostname, machine_type, os, uptime_seconds, last_seen, disks) 
+       VALUES (?, ?, ?, ?, ?, ?) 
+       ON CONFLICT(hostname) DO UPDATE SET 
+         machine_type=excluded.machine_type,
+         os=excluded.os,
+         uptime_seconds=excluded.uptime_seconds,
+         last_seen=excluded.last_seen,
+         disks=excluded.disks`
+    );
 
-    if (!machines.includes(normalizedHost)) {
-      machines.push(normalizedHost);
-      await env.DASHBOARD_KV.put(indexKey, JSON.stringify(machines));
-    }
+    await stmt.bind(normalizedHost, finalMachineType, os, uptimeSecs, now, disksJson).run();
 
     return new Response(JSON.stringify({ success: true, message: "Telemetry saved successfully" }), {
       status: 200,

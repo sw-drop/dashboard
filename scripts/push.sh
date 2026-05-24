@@ -147,47 +147,13 @@ done
 # Strip trailing comma from disk list and wrap in brackets
 JSON_DISKS="[${JSON_DISKS%,}]"
 
-# --- SMART PUSH & HEARTBEAT OPTIMIZATION ---
-CACHE_FILE="$HOME/.dashboard_push_cache"
-LAST_PUSH_FILE="$HOME/.dashboard_last_push"
-CURRENT_TIME=$(date +%s)
 
-# Read cached disk state and last push time
-CACHED_DISKS=""
-[ -f "$CACHE_FILE" ] && CACHED_DISKS=$(cat "$CACHE_FILE")
-
-LAST_PUSH_TIME=0
-[ -f "$LAST_PUSH_FILE" ] && LAST_PUSH_TIME=$(cat "$LAST_PUSH_FILE")
-
-# Calculate minutes elapsed since last successful push
-ELAPSED_SECS=$((CURRENT_TIME - LAST_PUSH_TIME))
-
-# We force a push if:
-# 1. Disk usage metrics changed (greater than 1GB or percent change)
-# 2. Or, 30 minutes (1800 seconds) have passed (Heartbeat)
-FORCE_PUSH=0
-if [ "$ELAPSED_SECS" -ge 1800 ]; then
-  FORCE_PUSH=1
-  REASON="Heartbeat trigger (30 mins elapsed)"
-fi
-
-if [ "$COMPARE_STR" != "$CACHED_DISKS" ]; then
-  FORCE_PUSH=1
-  REASON="Disk storage capacity changed"
-fi
-
-if [ "$FORCE_PUSH" -eq 0 ]; then
-  echo "Info: Disk metrics unchanged and heartbeat is active ($((ELAPSED_SECS / 60))m elapsed). Skipping push."
-  exit 0
-fi
-
-# --- END OF OPTIMIZATION ---
 
 # Construct final JSON Payload (without JQ dependency)
 PAYLOAD="{\"hostname\":\"$HOST\",\"machine_type\":\"$MACHINE_TYPE\",\"os\":\"$OS_NAME\",\"uptime_seconds\":$UPTIME_SECS,\"disks\":$JSON_DISKS}"
 
 # Push to Cloudflare endpoint
-echo "Info: Initiating metrics push. Reason: $REASON..."
+echo "Info: Initiating metrics push..."
 if command -v curl >/dev/null 2>&1; then
   response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
     -H "Authorization: Bearer $API_SECRET_TOKEN" \
@@ -197,9 +163,6 @@ if command -v curl >/dev/null 2>&1; then
 
   if [ "$response" -eq 200 ] 2>/dev/null; then
     echo "Success: Telemetry pushed successfully (HTTP 200)."
-    # Update local cache and timestamp on successful push
-    echo "$COMPARE_STR" > "$CACHE_FILE"
-    echo "$CURRENT_TIME" > "$LAST_PUSH_FILE"
   else
     echo "Error: Failed to push telemetry. API responded with HTTP status $response."
     exit 1
@@ -215,9 +178,6 @@ elif command -v wget >/dev/null 2>&1; then
   
   if [ "$response" -eq 200 ] 2>/dev/null; then
     echo "Success: Telemetry pushed successfully (HTTP 200)."
-    # Update local cache and timestamp on successful push
-    echo "$COMPARE_STR" > "$CACHE_FILE"
-    echo "$CURRENT_TIME" > "$LAST_PUSH_FILE"
   else
     echo "Error: Failed to push telemetry. API responded with HTTP status $response."
     exit 1

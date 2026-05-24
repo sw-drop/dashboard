@@ -73,45 +73,7 @@ try {
     Write-Host "Error gathering disk metrics: $_"
 }
 
-# --- SMART PUSH & HEARTBEAT OPTIMIZATION ---
-$CacheFile = Join-Path $env:USERPROFILE ".dashboard_push_cache.txt"
-$LastPushFile = Join-Path $env:USERPROFILE ".dashboard_last_push.txt"
 
-# Read cached state and last push time
-$CachedDisks = ""
-if (Test-Path $CacheFile) {
-    $CachedDisks = Get-Content $CacheFile -Raw
-}
-
-$LastPushTime = 0
-if (Test-Path $LastPushFile) {
-    $LastPushTime = [int64](Get-Content $LastPushFile -Raw)
-}
-
-$CurrentTime = [DateTimeOffset]::Now.ToUnixTimeSeconds()
-$ElapsedSecs = $CurrentTime - $LastPushTime
-
-# We force a push if:
-# 1. Disk usage metrics changed
-# 2. Or, 30 minutes (1800 seconds) have passed (Heartbeat)
-$ForcePush = $false
-$Reason = ""
-
-if ($ElapsedSecs -ge 1800) {
-    $ForcePush = $true
-    $Reason = "Heartbeat trigger (30 mins elapsed)"
-}
-
-if ($CompareStr -ne $CachedDisks) {
-    $ForcePush = $true
-    $Reason = "Disk storage capacity changed"
-}
-
-if (-not $ForcePush) {
-    Write-Host "Info: Disk metrics unchanged and heartbeat is active ($([math]::Floor($ElapsedSecs / 60))m elapsed). Skipping push."
-    exit 0
-}
-# --- END OF OPTIMIZATION ---
 
 # Construct Final JSON Payload
 $PayloadObj = @{
@@ -130,14 +92,10 @@ $Headers = @{
     "Content-Type"  = "application/json"
 }
 
-Write-Host "Info: Initiating metrics push. Reason: $Reason..."
+Write-Host "Info: Initiating metrics push..."
 try {
     $Response = Invoke-RestMethod -Uri $ApiUrl -Method Post -Headers $Headers -Body $PayloadJson -ErrorAction Stop
     Write-Host "Success: Telemetry pushed successfully."
-    
-    # Update local cache and timestamp on successful push
-    $CompareStr | Out-File -FilePath $CacheFile -NoNewline -Force
-    $CurrentTime.ToString() | Out-File -FilePath $LastPushFile -NoNewline -Force
 } catch {
     Write-Host "Error pushing telemetry: $_"
     exit 1

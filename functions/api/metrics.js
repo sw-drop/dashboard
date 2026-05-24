@@ -26,56 +26,35 @@ export async function onRequestGet(context) {
   };
 
   try {
-    // 1. Verify KV Binding
-    if (!env.DASHBOARD_KV) {
+    // 1. Verify D1 Binding
+    if (!env.DASHBOARD_DB) {
       return new Response(
-        JSON.stringify({ error: "Server Configuration Error: KV namespace DASHBOARD_KV not bound" }),
+        JSON.stringify({ error: "Server Configuration Error: D1 database DASHBOARD_DB not bound" }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    // 2. Read the fast-index key to avoid quota-restricted list() operations (Class A, 1k limit)
-    const indexKey = "machines_index";
-    let hostnames = [];
-    const indexStr = await env.DASHBOARD_KV.get(indexKey);
+    // 2. Query D1
+    const { results } = await env.DASHBOARD_DB.prepare("SELECT * FROM machines ORDER BY hostname ASC").all();
 
-    if (indexStr) {
+    // 3. Format results for frontend compatibility
+    const formattedResults = results.map(row => {
+      let parsedDisks = [];
       try {
-        hostnames = JSON.parse(indexStr);
-      } catch (e) {
-        hostnames = [];
-      }
-    } else {
-      // Self-healing Bootstrap fallback: If the index does not exist yet (first load),
-      // we perform a one-time list() and populate the index automatically.
-      const listResult = await env.DASHBOARD_KV.list({ prefix: "machine:" });
-      hostnames = listResult.keys.map((k) => k.name.substring(8)); // strip "machine:" prefix
-      if (hostnames.length > 0) {
-        await env.DASHBOARD_KV.put(indexKey, JSON.stringify(hostnames));
-      }
-    }
+        parsedDisks = JSON.parse(row.disks);
+      } catch (e) {}
 
-    // 3. Fetch each machine's payload in parallel using Class B get() reads (100k daily free limit!)
-    const fetchPromises = hostnames.map(async (host) => {
-      const kvKey = `machine:${host.toLowerCase().trim()}`;
-      const dataStr = await env.DASHBOARD_KV.get(kvKey);
-      if (dataStr) {
-        try {
-          return JSON.parse(dataStr);
-        } catch (e) {
-          return null;
-        }
-      }
-      return null;
+      return {
+        hostname: row.hostname,
+        machine_type: row.machine_type,
+        os: row.os,
+        uptime_seconds: row.uptime_seconds,
+        lastSeen: new Date(row.last_seen).toISOString(),
+        disks: parsedDisks
+      };
     });
 
-    const results = await Promise.all(fetchPromises);
-    const activeMachines = results.filter((m) => m !== null);
-
-    // 4. Sort machines alphabetically by hostname for presentation consistency
-    activeMachines.sort((a, b) => a.hostname.localeCompare(b.hostname));
-
-    return new Response(JSON.stringify(activeMachines), {
+    return new Response(JSON.stringify(formattedResults), {
       status: 200,
       headers: corsHeaders,
     });
