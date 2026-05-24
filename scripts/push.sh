@@ -94,12 +94,22 @@ for line in $(df -kP); do
 
   # Exclude macOS system/internal APFS volumes to avoid cluttering storage cards
   if [ "$OS_NAME" = "macOS" ]; then
+    # Ignore the read-only system root partition
+    if [ "$mount" = "/" ]; then
+      continue
+    fi
+    # Ignore internal virtual containers
     if [[ "$mount" =~ ^/System/Volumes/ && "$mount" != "/System/Volumes/Data" ]]; then
       continue
     fi
     # Exclude macOS recovery and VM partitions
     if [[ "$mount" =~ ^/(Volumes/Recovery|private/var/) ]]; then
       continue
+    fi
+    
+    # Rename the writeable User Data partition to a friendly name
+    if [ "$mount" = "/System/Volumes/Data" ]; then
+      mount="Macintosh HD"
     fi
   fi
 
