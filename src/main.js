@@ -200,7 +200,7 @@ function createMachineCard(machine, isOnline) {
       let barColor = "bg-cyan-600 dark:bg-cyan-500";
       if (percentage >= 90) {
         barColor = "bg-rose-600 dark:bg-rose-500 shadow-sm dark:shadow-[0_0_8px_rgba(239,68,68,0.5)]";
-      } else if (percentage >= 75) {
+      } else if (percentage >= 85) {
         barColor = "bg-amber-500";
       }
 
@@ -218,8 +218,8 @@ function createMachineCard(machine, isOnline) {
             <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
           </div>
           <div class="flex justify-between text-[10px] text-slate-500 telemetry-font">
+            <span>Size: ${totalGb}</span>
             <span>${freeGb} free</span>
-            <span>of ${totalGb}</span>
           </div>
         </div>
       `;
