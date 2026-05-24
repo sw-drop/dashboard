@@ -67,6 +67,7 @@ fi
 # Gather Disk Metrics using POSIX-compliant df -kP
 # Exclude standard virtual and system filesystems
 JSON_DISKS=""
+COMPARE_STR=""
 SEEN_DEVICES=""
 IFS=$'\n'
 for line in $(df -kP); do
@@ -134,6 +135,11 @@ for line in $(df -kP); do
   clean_mount=$(echo "$mount" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
   clean_fs=$(echo "$fs" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
 
+  # Append to comparison string for smart caching (rounded to the nearest 1 GB to ignore background noise)
+  # avail is in 1KB blocks, so divide by 1048576 (1024*1024) to get Gigabytes
+  avail_gb=$((avail / 1048576))
+  COMPARE_STR="${COMPARE_STR}mount:${clean_mount},percent:${percent},avail_gb:${avail_gb};"
+
   # Append disk block to JSON list
   JSON_DISKS="$JSON_DISKS{\"mount\":\"$clean_mount\",\"device\":\"$clean_fs\",\"size_bytes\":$SIZE_BYTES,\"used_bytes\":$USED_BYTES,\"available_bytes\":$AVAIL_BYTES,\"used_percent\":$percent},"
 done
@@ -141,16 +147,63 @@ done
 # Strip trailing comma from disk list and wrap in brackets
 JSON_DISKS="[${JSON_DISKS%,}]"
 
+# --- SMART PUSH & HEARTBEAT OPTIMIZATION ---
+CACHE_FILE="$HOME/.dashboard_push_cache"
+LAST_PUSH_FILE="$HOME/.dashboard_last_push"
+CURRENT_TIME=$(date +%s)
+
+# Read cached disk state and last push time
+CACHED_DISKS=""
+[ -f "$CACHE_FILE" ] && CACHED_DISKS=$(cat "$CACHE_FILE")
+
+LAST_PUSH_TIME=0
+[ -f "$LAST_PUSH_FILE" ] && LAST_PUSH_TIME=$(cat "$LAST_PUSH_FILE")
+
+# Calculate minutes elapsed since last successful push
+ELAPSED_SECS=$((CURRENT_TIME - LAST_PUSH_TIME))
+
+# We force a push if:
+# 1. Disk usage metrics changed (greater than 1GB or percent change)
+# 2. Or, 30 minutes (1800 seconds) have passed (Heartbeat)
+FORCE_PUSH=0
+if [ "$ELAPSED_SECS" -ge 1800 ]; then
+  FORCE_PUSH=1
+  REASON="Heartbeat trigger (30 mins elapsed)"
+fi
+
+if [ "$COMPARE_STR" != "$CACHED_DISKS" ]; then
+  FORCE_PUSH=1
+  REASON="Disk storage capacity changed"
+fi
+
+if [ "$FORCE_PUSH" -eq 0 ]; then
+  echo "Info: Disk metrics unchanged and heartbeat is active ($((ELAPSED_SECS / 60))m elapsed). Skipping push."
+  exit 0
+fi
+
+# --- END OF OPTIMIZATION ---
+
 # Construct final JSON Payload (without JQ dependency)
 PAYLOAD="{\"hostname\":\"$HOST\",\"machine_type\":\"$MACHINE_TYPE\",\"os\":\"$OS_NAME\",\"uptime_seconds\":$UPTIME_SECS,\"disks\":$JSON_DISKS}"
 
 # Push to Cloudflare endpoint
+echo "Info: Initiating metrics push. Reason: $REASON..."
 if command -v curl >/dev/null 2>&1; then
   response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
     -H "Authorization: Bearer $API_SECRET_TOKEN" \
     -H "Content-Type: application/json" \
     -d "$PAYLOAD" \
     "$API_URL")
+
+  if [ "$response" -eq 200 ] 2>/dev/null; then
+    echo "Success: Telemetry pushed successfully (HTTP 200)."
+    # Update local cache and timestamp on successful push
+    echo "$COMPARE_STR" > "$CACHE_FILE"
+    echo "$CURRENT_TIME" > "$LAST_PUSH_FILE"
+  else
+    echo "Error: Failed to push telemetry. API responded with HTTP status $response."
+    exit 1
+  fi
 elif command -v wget >/dev/null 2>&1; then
   # Fetch server headers using wget and parse the HTTP status code (e.g. 200, 403, 500)
   response_headers=$(wget --server-response --post-data="$PAYLOAD" \
@@ -159,14 +212,17 @@ elif command -v wget >/dev/null 2>&1; then
     --no-check-certificate \
     -O /dev/null "$API_URL" 2>&1)
   response=$(echo "$response_headers" | awk '/HTTP\// {print $2}' | tail -n 1)
+  
+  if [ "$response" -eq 200 ] 2>/dev/null; then
+    echo "Success: Telemetry pushed successfully (HTTP 200)."
+    # Update local cache and timestamp on successful push
+    echo "$COMPARE_STR" > "$CACHE_FILE"
+    echo "$CURRENT_TIME" > "$LAST_PUSH_FILE"
+  else
+    echo "Error: Failed to push telemetry. API responded with HTTP status $response."
+    exit 1
+  fi
 else
   echo "Error: Neither curl nor wget was found on this system. Please install curl or wget."
-  exit 1
-fi
-
-if [ "$response" -eq 200 ] 2>/dev/null; then
-  echo "Success: Telemetry pushed successfully (HTTP 200)."
-else
-  echo "Error: Failed to push telemetry. API responded with HTTP status $response."
   exit 1
 fi

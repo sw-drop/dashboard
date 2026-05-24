@@ -74,8 +74,26 @@ export async function onRequestPost(context) {
       );
     }
 
-    const kvKey = `machine:${hostname.toLowerCase().trim()}`;
+    const normalizedHost = hostname.toLowerCase().trim();
+    const kvKey = `machine:${normalizedHost}`;
     await env.DASHBOARD_KV.put(kvKey, JSON.stringify(systemState));
+
+    // Maintain a fast-read machines index to avoid costly and quota-restricted list() operations
+    const indexKey = "machines_index";
+    let machines = [];
+    const indexStr = await env.DASHBOARD_KV.get(indexKey);
+    if (indexStr) {
+      try {
+        machines = JSON.parse(indexStr);
+      } catch (e) {
+        machines = [];
+      }
+    }
+
+    if (!machines.includes(normalizedHost)) {
+      machines.push(normalizedHost);
+      await env.DASHBOARD_KV.put(indexKey, JSON.stringify(machines));
+    }
 
     return new Response(JSON.stringify({ success: true, message: "Telemetry saved successfully" }), {
       status: 200,

@@ -34,18 +34,35 @@ export async function onRequestGet(context) {
       );
     }
 
-    // 2. List all keys with prefix "machine:"
-    const listResult = await env.DASHBOARD_KV.list({ prefix: "machine:" });
-    const machineKeys = listResult.keys;
+    // 2. Read the fast-index key to avoid quota-restricted list() operations (Class A, 1k limit)
+    const indexKey = "machines_index";
+    let hostnames = [];
+    const indexStr = await env.DASHBOARD_KV.get(indexKey);
 
-    // 3. Fetch each machine's payload in parallel
-    const fetchPromises = machineKeys.map(async (keyObj) => {
-      const dataStr = await env.DASHBOARD_KV.get(keyObj.name);
+    if (indexStr) {
+      try {
+        hostnames = JSON.parse(indexStr);
+      } catch (e) {
+        hostnames = [];
+      }
+    } else {
+      // Self-healing Bootstrap fallback: If the index does not exist yet (first load),
+      // we perform a one-time list() and populate the index automatically.
+      const listResult = await env.DASHBOARD_KV.list({ prefix: "machine:" });
+      hostnames = listResult.keys.map((k) => k.name.substring(8)); // strip "machine:" prefix
+      if (hostnames.length > 0) {
+        await env.DASHBOARD_KV.put(indexKey, JSON.stringify(hostnames));
+      }
+    }
+
+    // 3. Fetch each machine's payload in parallel using Class B get() reads (100k daily free limit!)
+    const fetchPromises = hostnames.map(async (host) => {
+      const kvKey = `machine:${host.toLowerCase().trim()}`;
+      const dataStr = await env.DASHBOARD_KV.get(kvKey);
       if (dataStr) {
         try {
           return JSON.parse(dataStr);
         } catch (e) {
-          // Exclude corrupted JSON data quietly
           return null;
         }
       }
