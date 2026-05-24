@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ==============================================================================
-   Design System Customizations & Utilities
+   Design System Customizations & Utilities - Light & Dark Modes
    ============================================================================== */
 
 @layer base {
@@ -11,7 +11,7 @@
   }
 
   body {
-    @apply bg-slate-950 text-slate-100 antialiased min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200;
+    @apply bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased min-h-screen selection:bg-cyan-500/20 selection:text-cyan-800 dark:selection:bg-cyan-500/30 dark:selection:text-cyan-200 transition-colors duration-300;
   }
 }
 
@@ -22,15 +22,21 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-slate-950;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full border-2 border-slate-950 hover:bg-slate-700 transition-colors;
+  @apply bg-slate-300 dark:bg-slate-800 rounded-full border-2 border-slate-50 dark:border-slate-950 hover:bg-slate-400 dark:hover:bg-slate-700 transition-colors;
 }
 
 /* Subtle glowing grid background */
 .grid-glow {
+  background-image: 
+    radial-gradient(circle at 50% -20%, rgba(6, 182, 212, 0.05), transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(99, 102, 241, 0.02), transparent 40%);
+}
+
+.dark .grid-glow {
   background-image: 
     radial-gradient(circle at 50% -20%, rgba(6, 182, 212, 0.08), transparent 60%),
     radial-gradient(circle at 0% 100%, rgba(99, 102, 241, 0.03), transparent 40%);
@@ -38,11 +44,11 @@
 
 /* Premium glassmorphic cards */
 .glass-card {
-  @apply bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl transition-all duration-300;
+  @apply bg-white dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl transition-all duration-300 shadow-xs;
 }
 
 .glass-card:hover {
-  @apply border-slate-700/60 bg-slate-900/80 shadow-lg shadow-cyan-500/5 -translate-y-0.5;
+  @apply border-slate-300/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-900/80 shadow-md dark:shadow-cyan-500/5 -translate-y-0.5;
 }
 
 /* Monospace telemetry styles */

@@ -14,36 +14,60 @@
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet -->
-  <script type="module" crossorigin src="/assets/index-CCtmSyiw.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DzzcePm-.css">
+  
+  <!-- Inline script to prevent theme flickering on page load -->
+  <script>
+    // Injects the saved theme class directly to the HTML tag before page rendering
+    if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  <script type="module" crossorigin src="/assets/index-DmI4PTPB.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CUzluuVy.css">
 </head>
 <body class="grid-glow">
 
   <!-- Header Section -->
   <header class="max-w-7xl mx-auto px-4 pt-12 pb-6">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-900 pb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-200 dark:border-slate-900 pb-8">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="h-2 w-2 rounded-full bg-cyan-500 animate-pulse"></span>
-          <span class="text-xs font-semibold uppercase tracking-wider text-cyan-400 telemetry-font">Private Storage Hub</span>
+          <span class="text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 telemetry-font">Private Storage Hub</span>
         </div>
-        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">System Dashboard</h1>
-        <p class="mt-2 text-sm text-slate-400">Secure storage capacity and telemetry tracking from all machines.</p>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">System Dashboard</h1>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Secure storage capacity and telemetry tracking from all machines.</p>
       </div>
 
-      <!-- Quick Metrics Summary Stats -->
-      <div id="quick-stats" class="flex gap-4">
-        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl px-4 py-3 min-w-[100px]">
-          <div class="text-xs text-slate-400">Total Systems</div>
-          <div id="stat-total" class="text-2xl font-bold text-slate-200">-</div>
-        </div>
-        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl px-4 py-3 min-w-[100px]">
-          <div class="text-xs text-slate-400">Online</div>
-          <div id="stat-online" class="text-2xl font-bold text-emerald-400">-</div>
-        </div>
-        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl px-4 py-3 min-w-[100px]">
-          <div class="text-xs text-slate-400">Offline</div>
-          <div id="stat-offline" class="text-2xl font-bold text-rose-400">-</div>
+      <!-- Quick Metrics Summary Stats & Theme Toggle -->
+      <div class="flex items-center gap-4">
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/40 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all cursor-pointer shadow-xs" title="Toggle Theme">
+          <!-- Sun Icon (visible in dark mode) -->
+          <svg id="theme-toggle-sun-icon" class="h-5 w-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.364l-.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+          </svg>
+          <!-- Moon Icon (visible in light mode) -->
+          <svg id="theme-toggle-moon-icon" class="h-5 w-5 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <div id="quick-stats" class="flex gap-4">
+          <div class="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-xl px-4 py-3 min-w-[100px] shadow-xs">
+            <div class="text-xs text-slate-500 dark:text-slate-400">Total Systems</div>
+            <div id="stat-total" class="text-2xl font-bold text-slate-800 dark:text-slate-200">-</div>
+          </div>
+          <div class="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-xl px-4 py-3 min-w-[100px] shadow-xs">
+            <div class="text-xs text-slate-500 dark:text-slate-400">Online</div>
+            <div id="stat-online" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">-</div>
+          </div>
+          <div class="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-xl px-4 py-3 min-w-[100px] shadow-xs">
+            <div class="text-xs text-slate-500 dark:text-slate-400">Offline</div>
+            <div id="stat-offline" class="text-2xl font-bold text-rose-600 dark:text-rose-400">-</div>
+          </div>
         </div>
       </div>
     </div>
@@ -58,82 +82,82 @@
       <div class="glass-card p-6 min-h-[300px] animate-pulse flex flex-col justify-between">
         <div>
           <div class="flex justify-between items-start mb-6">
-            <div class="h-6 w-32 bg-slate-800 rounded"></div>
-            <div class="h-5 w-16 bg-slate-800 rounded-full"></div>
+            <div class="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded"></div>
+            <div class="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
           </div>
           <div class="space-y-4">
             <div class="space-y-2">
-              <div class="h-4 w-12 bg-slate-800 rounded"></div>
-              <div class="h-2 w-full bg-slate-800 rounded-full"></div>
+              <div class="h-4 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div>
+              <div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full"></div>
             </div>
             <div class="space-y-2">
-              <div class="h-4 w-16 bg-slate-800 rounded"></div>
-              <div class="h-2 w-full bg-slate-800 rounded-full"></div>
+              <div class="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded"></div>
+              <div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full"></div>
             </div>
           </div>
         </div>
-        <div class="h-4 w-28 bg-slate-800 rounded mt-6"></div>
+        <div class="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded mt-6"></div>
       </div>
 
       <div class="glass-card p-6 min-h-[300px] animate-pulse flex flex-col justify-between hidden md:flex">
         <div>
           <div class="flex justify-between items-start mb-6">
-            <div class="h-6 w-40 bg-slate-800 rounded"></div>
-            <div class="h-5 w-16 bg-slate-800 rounded-full"></div>
+            <div class="h-6 w-40 bg-slate-200 dark:bg-slate-800 rounded"></div>
+            <div class="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
           </div>
           <div class="space-y-4">
             <div class="space-y-2">
-              <div class="h-4 w-20 bg-slate-800 rounded"></div>
-              <div class="h-2 w-full bg-slate-800 rounded-full"></div>
+              <div class="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded"></div>
+              <div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full"></div>
             </div>
           </div>
         </div>
-        <div class="h-4 w-32 bg-slate-800 rounded mt-6"></div>
+        <div class="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded mt-6"></div>
       </div>
 
       <div class="glass-card p-6 min-h-[300px] animate-pulse flex flex-col justify-between hidden lg:flex">
         <div>
           <div class="flex justify-between items-start mb-6">
-            <div class="h-6 w-36 bg-slate-800 rounded"></div>
-            <div class="h-5 w-16 bg-slate-800 rounded-full"></div>
+            <div class="h-6 w-36 bg-slate-200 dark:bg-slate-800 rounded"></div>
+            <div class="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
           </div>
           <div class="space-y-4">
             <div class="space-y-2">
-              <div class="h-4 w-24 bg-slate-800 rounded"></div>
-              <div class="h-2 w-full bg-slate-800 rounded-full"></div>
+              <div class="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
+              <div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full"></div>
             </div>
           </div>
         </div>
-        <div class="h-4 w-36 bg-slate-800 rounded mt-6"></div>
+        <div class="h-4 w-36 bg-slate-200 dark:bg-slate-800 rounded mt-6"></div>
       </div>
 
     </div>
 
     <!-- Empty State (Hidden by Default) -->
     <div id="empty-state" class="hidden flex-col items-center justify-center py-20 px-4 glass-card border-dashed">
-      <svg class="h-12 w-12 text-slate-600 mb-4 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg class="h-12 w-12 text-slate-400 dark:text-slate-600 mb-4 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin='round' stroke-width='1.5' d='M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' />
       </svg>
-      <h3 class="text-lg font-medium text-slate-300">No telemetry data received yet</h3>
+      <h3 class="text-lg font-medium text-slate-700 dark:text-slate-300">No telemetry data received yet</h3>
       <p class="text-sm text-slate-500 mt-1 max-w-sm text-center">Set up your local push scripts on your servers to broadcast active metrics to this dashboard.</p>
     </div>
   </main>
 
   <!-- Interactive Floating HUD Dock (Quick-links Navigation) -->
-  <nav id="hud-dock" class="fixed bottom-6 left-1/2 -translate-x-1/2 glass-card bg-slate-950/80 px-6 py-3 shadow-2xl border-cyan-500/10 flex items-center gap-4 z-50 transition-all duration-300 pointer-events-auto select-none scale-100 hover:border-cyan-500/25">
+  <nav id="hud-dock" class="fixed bottom-6 left-1/2 -translate-x-1/2 glass-card bg-white/95 dark:bg-slate-950/80 px-6 py-3 shadow-xl border-slate-200/80 dark:border-cyan-500/10 flex items-center gap-4 z-50 transition-all duration-300 pointer-events-auto select-none scale-100 hover:border-slate-300 dark:hover:border-cyan-500/25">
     
     <!-- Reload/Fetch Status Badge -->
-    <button id="refresh-button" class="group flex items-center justify-center p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer" title="Refresh Telemetry">
+    <button id="refresh-button" class="group flex items-center justify-center p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/40 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all cursor-pointer" title="Refresh Telemetry">
       <svg id="refresh-icon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.253 8H18" />
       </svg>
     </button>
     
-    <div class="h-6 w-[1px] bg-slate-800"></div>
+    <div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-800"></div>
 
     <!-- Dynamically Populated Machine Jump Links -->
     <div id="dock-links" class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider telemetry-font">
-      <span class="text-slate-500 py-1 px-2">Ready</span>
+      <span class="text-slate-400 dark:text-slate-500 py-1 px-2">Ready</span>
     </div>
 
   </nav>
