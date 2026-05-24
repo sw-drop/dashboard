@@ -8,7 +8,7 @@
 # ==============================================================================
 
 # --- CONFIGURATION (Change these to match your environment) ---
-API_URL="https://your-dashboard-domain.pages.dev/api/push-metrics"
+API_URL="https://dashboard-der.pages.dev/api/push-metrics"
 API_SECRET_TOKEN="f3b9c4501a2d4807a9e3a6c9d2f5e70c" # Change to a custom random token
 
 # Optional Override for Hostname (defaults to system hostname)
@@ -55,7 +55,7 @@ fi
 # Calculate System Uptime (seconds)
 UPTIME_SECS=0
 if [ "$OS_NAME" = "macOS" ]; then
-  BOOT_TIME=$(sysctl -n kern.boottime | awk -F'[ =,]' '{print $6}')
+  BOOT_TIME=$(sysctl -n kern.boottime | awk '{print $4}' | tr -d ',')
   NOW=$(date +%s)
   UPTIME_SECS=$((NOW - BOOT_TIME))
 else
@@ -90,6 +90,17 @@ for line in $(df -kP); do
   # Exclude Docker overlay mounts, loop devices (Ubuntu Snaps), and virtual endpoints
   if [[ "$fs" =~ ^/dev/loop ]] || [[ "$mount" =~ ^/(proc|sys|dev|run|snap|var/lib/docker) ]]; then
     continue
+  fi
+
+  # Exclude macOS system/internal APFS volumes to avoid cluttering storage cards
+  if [ "$OS_NAME" = "macOS" ]; then
+    if [[ "$mount" =~ ^/System/Volumes/ && "$mount" != "/System/Volumes/Data" ]]; then
+      continue
+    fi
+    # Exclude macOS recovery and VM partitions
+    if [[ "$mount" =~ ^/(Volumes/Recovery|private/var/) ]]; then
+      continue
+    fi
   fi
 
   # Skip zero-size partitions
