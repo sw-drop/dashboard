@@ -17,7 +17,7 @@ HOSTNAME_OVERRIDE=""
 # Optional Sub-type identifying specialized systems:
 # e.g., "OMV", "UGOS (DH2300)", "PiOS", "macOS", "Ubuntu Server"
 # If left empty, the script will attempt to detect the OS automatically.
-MACHINE_TYPE="macOS" 
+MACHINE_TYPE="" 
 
 # --- END OF CONFIGURATION ---
 
