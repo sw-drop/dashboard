@@ -30,7 +30,7 @@ if [ -n "$HOSTNAME_OVERRIDE" ]; then
 else
   # macOS cron environments often cause 'hostname' to return "UNKNOWN", so use scutil if available
   if command -v scutil >/dev/null 2>&1; then
-    HOST=$(scutil --get LocalHostName)
+    HOST=$(scutil --get LocalHostName | cut -d. -f1)
   else
     HOST=$(hostname | cut -d. -f1)
   fi
