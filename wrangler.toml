@@ -2,11 +2,9 @@
 # Cloudflare Pages / Wrangler Configuration File
 # ==============================================================================
 
-name = "dashboard"
+name = "dashboard-der"
+pages_build_output_dir = "dist"
 compatibility_date = "2026-05-23"
-
-[assets]
-directory = "./dist"
 
 [vars]
 API_SECRET_TOKEN = "f3b9c4501a2d4807a9e3a6c9d2f5e70c"
