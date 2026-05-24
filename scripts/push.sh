@@ -67,6 +67,7 @@ fi
 # Gather Disk Metrics using POSIX-compliant df -kP
 # Exclude standard virtual and system filesystems
 JSON_DISKS=""
+SEEN_DEVICES=""
 IFS=$'\n'
 for line in $(df -kP); do
   # Skip header line
@@ -87,10 +88,16 @@ for line in $(df -kP); do
     continue
   fi
 
-  # Exclude Docker overlay mounts, loop devices (Ubuntu Snaps), and virtual endpoints
-  if [[ "$fs" =~ ^/dev/loop ]] || [[ "$mount" =~ ^/(proc|sys|dev|run|snap|var/lib/docker) ]]; then
+  # Exclude Docker overlay mounts, loop devices (Ubuntu Snaps), system partitions, and virtual endpoints
+  if [[ "$fs" =~ ^/dev/loop ]] || [[ "$mount" =~ ^/(proc|sys|dev|run|snap|var/lib/docker|rootfs|ugreen|mnt/factory|overlay) ]]; then
     continue
   fi
+
+  # Skip duplicate device mappings (e.g. same volume mounted in multiple places)
+  if [[ " $SEEN_DEVICES " == *" $fs "* ]]; then
+    continue
+  fi
+  SEEN_DEVICES="$SEEN_DEVICES $fs"
 
   # Exclude macOS system/internal APFS volumes to avoid cluttering storage cards
   if [ "$OS_NAME" = "macOS" ]; then
