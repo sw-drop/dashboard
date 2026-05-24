@@ -9,7 +9,7 @@
 # ==============================================================================
 
 # --- CONFIGURATION (Change these to match your environment) ---
-$ApiUrl = "https://your-dashboard-domain.pages.dev/api/push-metrics"
+$ApiUrl = "https://dashboard-der.pages.dev/api/push-metrics"
 $ApiSecretToken = "f3b9c4501a2d4807a9e3a6c9d2f5e70c" # Must match push.sh and Cloudflare environment variable
 
 # Optional Override for Hostname (defaults to computer name)
