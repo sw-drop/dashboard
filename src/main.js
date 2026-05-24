@@ -45,6 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Start a clock to refresh relative timestamps every 10 seconds
   setInterval(updateAllRelativeTimes, 10000);
+
+  // Auto-refresh telemetry data silently in the background every 60 seconds
+  setInterval(fetchTelemetry, 60000);
 });
 
 // Fetch metrics from Cloudflare Pages API
