@@ -165,16 +165,18 @@ echo "Payload: $PAYLOAD"
 # Push to Cloudflare endpoint
 echo "Info: Initiating metrics push..."
 if command -v curl >/dev/null 2>&1; then
-  response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+  # Use -S to show errors even when silent (-s)
+  response=$(curl -s -S -o /dev/null -w "%{http_code}" -X POST \
     -H "Authorization: Bearer $API_SECRET_TOKEN" \
     -H "Content-Type: application/json" \
     -d "$PAYLOAD" \
-    "$API_URL")
+    "$API_URL" 2> /tmp/dashboard_curl_err.txt)
 
   if [ "$response" -eq 200 ] 2>/dev/null; then
     echo "Success: Telemetry pushed successfully (HTTP 200)."
   else
-    echo "Error: Failed to push telemetry. API responded with HTTP status $response."
+    echo "Error: Failed to push telemetry. API responded with HTTP status ${response:-000}."
+    [ -s /tmp/dashboard_curl_err.txt ] && echo "Curl Error Output:" && cat /tmp/dashboard_curl_err.txt
     exit 1
   fi
 elif command -v wget >/dev/null 2>&1; then
