@@ -119,7 +119,7 @@ for line in $(df -kP); do
       continue
     fi
     # Exclude macOS recovery, VM, and TimeMachine partitions
-    if [[ "$mount" =~ ^/(Volumes/Recovery|Volumes/com\.apple\.TimeMachine|private/var/) ]]; then
+    if [[ "$mount" =~ ^/(Volumes/Recovery|Volumes/com\.apple\.TimeMachine|Volumes/\.timemachine|Volumes/Backups|private/var/) ]]; then
       continue
     fi
     
